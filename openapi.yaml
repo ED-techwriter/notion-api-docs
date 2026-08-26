@@ -1,0 +1,562 @@
+openapi: 3.0.0
+
+info:
+  title: Notion API
+  description: API для создания, получения, перемещения и обновления страниц.
+  version: 1.0.0
+
+servers:
+  - url: https://api.notion.com/v1
+    description: Основной сервер Notion API
+
+security:
+  - bearerAuth: []
+
+paths:
+  /pages:
+    post:
+      summary: Создать дочернюю страницу под родительской страницей
+      operationId: pagesPOST
+      tags:
+        - pages
+      parameters:
+        - $ref: '#/components/parameters/NotionVersion'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePage'
+      responses:
+        '200':
+          $ref: '#/components/responses/PageCreationSuccess'
+        '400':
+          $ref: '#/components/responses/InvalidJson'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/RestrictedResource'
+        '404':
+          $ref: '#/components/responses/ObjectNotFound'
+        '406':
+          $ref: '#/components/responses/RowLimitExceeded'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
+        '529':
+          $ref: '#/components/responses/ServiceOverload'
+
+  /pages/{page_id}:
+    get:
+      summary: Получить данные страницы по ID
+      operationId: pagesIdGET
+      tags:
+        - pages
+      parameters:
+        - $ref: '#/components/parameters/PageId'
+        - $ref: '#/components/parameters/NotionVersion'
+      responses:
+        '200':
+          $ref: '#/components/responses/PageSuccess'
+        '400':
+          $ref: '#/components/responses/InvalidJson'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/RestrictedResource'
+        '404':
+          $ref: '#/components/responses/ObjectNotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
+        '529':
+          $ref: '#/components/responses/ServiceOverload'
+
+    patch:
+      summary: Частично обновить страницу
+      description: Обновляет свойства, иконку, обложку страницы. Также используется для отправки страницы в корзину
+      operationId: pagesPATCH
+      tags:
+        - pages
+      parameters:
+        - $ref: '#/components/parameters/PageId'
+        - $ref: '#/components/parameters/NotionVersion'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePage'
+      responses:
+        '200':
+          $ref: '#/components/responses/PageUpdateSuccess'
+        '400':
+          $ref: '#/components/responses/InvalidJson'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/RestrictedResource'
+        '404':
+          $ref: '#/components/responses/ObjectNotFound'
+        '406':
+          $ref: '#/components/responses/RowLimitExceeded'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
+        '529':
+          $ref: '#/components/responses/ServiceOverload'
+
+  /pages/{page_id}/move:
+    post:
+      summary: Переместить страницу
+      description: Перемещает дочернюю страницу к новой родительской странице
+      operationId: pagesIdPOST
+      tags:
+        - pages
+      parameters:
+        - $ref: '#/components/parameters/PageId'
+        - $ref: '#/components/parameters/NotionVersion'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovePage'
+      responses:
+        '200':
+          $ref: '#/components/responses/PageMoveSuccess'
+        '400':
+          $ref: '#/components/responses/InvalidJson'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/RestrictedResource'
+        '404':
+          $ref: '#/components/responses/ObjectNotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
+        '529':
+          $ref: '#/components/responses/ServiceOverload'
+
+components:
+  parameters:
+    NotionVersion:
+      name: Notion-Version
+      in: header
+      required: true
+      description: Версия API Notion
+      schema:
+        type: string
+        example: "2026-03-11"
+
+    PageId:
+      name: page_id
+      in: path
+      required: true
+      description: Уникальный идентификатор страницы Notion
+      schema:
+        type: string
+        example: "3c435ea1-59d2-8060-a007-e62066d97eaa"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+
+  schemas:
+    CreatePage:
+      type: object
+      description: Данные для создания страницы
+      required:
+        - parent
+        - properties
+      properties:
+        parent:
+          type: object
+          description: Родительская страница, куда добавляется дочерняя страница
+          required:
+            - type
+            - page_id
+          properties:
+            type:
+              type: string
+              example: page_id
+            page_id:
+              type: string
+              description: Уникальный идентификатор родительской страницы
+              example: "3c435ea1-59d2-8060-a007-e62066d97eaa"
+        properties:
+          type: object
+          description: Свойства создаваемой страницы
+          required:
+            - title
+          properties:
+            title:
+              type: object
+              properties:
+                title:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: text
+                      text:
+                        type: object
+                        properties:
+                          content:
+                            type: string
+                            description: Текст заголовка страницы
+                            example: My page
+      example:
+        parent:
+          type: page_id
+          page_id: "3c435ea1-59d2-8060-a007-e62066d97eaa"
+        properties:
+          title:
+            title:
+              - type: text
+                text:
+                  content: My page
+
+    UpdatePage:
+      type: object
+      description: Поля для обновления страницы
+      properties:
+        icon:
+          type: object
+          description: Иконка страницы
+          properties:
+            type:
+              type: string
+              example: emoji
+            emoji:
+              type: string
+              example: "😄"
+        cover:
+          type: object
+          nullable: true
+          description: Обложка страницы
+        properties:
+          type: object
+          description: Свойства страницы (например, заголовок)
+        in_trash:
+          type: boolean
+          description: Передайте true, чтобы отправить страницу в корзину и false, чтобы восстановить
+      example:
+        icon:
+          type: emoji
+          emoji: "😄"
+
+    MovePage:
+      type: object
+      description: Данные для перемещения страницы к новой родительской странице
+      required:
+        - parent
+      properties:
+        parent:
+          type: object
+          description: Родительская страница
+          required:
+            - type
+            - page_id
+          properties:
+            type:
+              type: string
+              example: page_id
+            page_id:
+              type: string
+              description: Уникальный идентификатор родительской страницы
+              example: "3c435ea1-59d2-816d-ab6a-f32e0f5689c9"
+      example:
+        parent:
+          type: page_id
+          page_id: "3c435ea1-59d2-816d-ab6a-f32e0f5689c9"
+
+    Page:
+      type: object
+      description: Данные страницы
+      required:
+        - object
+        - id
+        - created_time
+        - last_edited_time
+        - parent
+      properties:
+        object:
+          type: string
+          description: Тип объекта, всегда "page"
+          example: page
+        id:
+          type: string
+          description: Уникальный идентификатор страницы
+          example: "3c535ea1-59d2-81f3-9eef-d9fd11a09b17"
+        created_time:
+          type: string
+          format: date-time
+          description: Время создания страницы
+        last_edited_time:
+          type: string
+          format: date-time
+          description: Время последнего редактирования страницы
+        created_by:
+          type: object
+          description: Пользователь, создавший страницу
+          properties:
+            object:
+              type: string
+              example: user
+            id:
+              type: string
+        last_edited_by:
+          type: object
+          description: Пользователь, последним отредактировавший страницу
+          properties:
+            object:
+              type: string
+              example: user
+            id:
+              type: string
+        cover:
+          type: object
+          nullable: true
+          description: Обложка страницы
+        icon:
+          type: object
+          nullable: true
+          description: Иконка страницы
+        parent:
+          type: object
+          description: Родительская страница
+          properties:
+            type:
+              type: string
+              example: page_id
+            page_id:
+              type: string
+        in_trash:
+          type: boolean
+          description: Находится ли страница в корзине
+        is_archived:
+          type: boolean
+          description: Архивирована ли страница
+        is_locked:
+          type: boolean
+          description: Заблокирована ли страница от редактирования
+        properties:
+          type: object
+          description: Свойства страницы (например, заголовок)
+        url:
+          type: string
+          description: Ссылка на страницу в Notion
+        public_url:
+          type: string
+          nullable: true
+          description: Публичная ссылка на страницу, если она опубликована
+        archived:
+          type: boolean
+          description: Устаревшее поле, дублирующее is_archived. Присутствует не во всех ответах
+        request_id:
+          type: string
+          description: Идентификатор запроса
+      example:
+        object: page
+        id: "3c535ea1-59d2-81f3-9eef-d9fd11a09b17"
+        created_time: "2026-08-23T11:05:00.000Z"
+        last_edited_time: "2026-08-23T16:17:00.000Z"
+        created_by:
+          object: user
+          id: "3c435ea1-59d2-8126-b17a-0027f7aa00dd"
+        last_edited_by:
+          object: user
+          id: "3c435ea1-59d2-8126-b17a-0027f7aa00dd"
+        cover: null
+        icon:
+          type: emoji
+          emoji: "😄"
+        parent:
+          type: page_id
+          page_id: "3c435ea1-59d2-816d-ab6a-f32e0f5689c9"
+        in_trash: false
+        is_archived: false
+        is_locked: false
+        properties:
+          title:
+            id: title
+            type: title
+            title:
+              - type: text
+                text:
+                  content: New
+                  link: null
+                plain_text: New
+                href: null
+        url: "https://app.notion.com/p/New-3c535ea159d281f39eefd9fd11a09b17"
+        public_url: null
+        request_id: "534dd26b-a33e-4598-9933-9066903ad3b2"
+
+    error:
+      type: object
+      required:
+        - object
+        - status
+        - code
+        - message
+      properties:
+        object:
+          type: string
+          description: Тип объекта, всегда "error"
+          example: error
+        status:
+          type: integer
+          description: HTTP-код ошибки
+          example: 400
+        code:
+          type: string
+          description: Код ошибки
+          example: invalid_json
+        message:
+          type: string
+          description: Описание ошибки
+          example: Error parsing JSON body
+        request_id:
+          type: string
+          description: Идентификатор запроса
+
+  responses:
+    PageSuccess:
+      description: Данные успешно получены
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Page'
+
+    PageCreationSuccess:
+      description: Страница успешно создана
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Page'
+
+    PageMoveSuccess:
+      description: Страница успешно перемещена
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Page'
+
+    PageUpdateSuccess:
+      description: Данные страницы успешно обновлены
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Page'
+
+    InvalidJson:
+      description: Тело запроса содержит некорректный JSON, исправьте входные данные и отправьте запрос снова
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+
+    Unauthorized:
+      description: Пользователь не авторизован, авторизуйтесь и отправьте запрос снова
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+
+    RestrictedResource:
+      description: Отсутствует доступ к запрашиваемому ресурсу, убедитесь, что токен связан с рабочим пространством
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+
+    ObjectNotFound:
+      description: Страница с указанным id не найдена
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+
+    RowLimitExceeded:
+      description: Превышено допустимое количество строк/свойств в запросе
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+
+    Conflict:
+      description: Конфликт при изменении данных страницы
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+
+    RateLimited:
+      description: Превышен лимит количества запросов, попробуйте повторить запрос позже
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+
+    ServerError:
+      description: Внутренняя ошибка сервера Notion, попробуйте повторить запрос позже
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+
+    ServiceUnavailable:
+      description: Сервис временно недоступен, попробуйте повторить запрос позже
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+
+    GatewayTimeout:
+      description: Сервер не дождался ответа от вышестоящего сервиса, попробуйте повторить запрос позже
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+
+    ServiceOverload:
+      description: Сервис перегружен, попробуйте повторить запрос позже
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+
+tags:
+  - name: pages
+    description: Операции со страницами Notion
