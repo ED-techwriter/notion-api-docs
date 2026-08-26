@@ -5,6 +5,8 @@ import starlightOpenAPI, { openAPISidebarGroups } from 'starlight-openapi';
 
 // https://astro.build/config
 export default defineConfig({
+	site: 'https://ed-techwriter.github.io',
+  	base: '/notion-api-docs',
 	integrations: [
 		starlight({
 			title: 'Документация Notion API',
